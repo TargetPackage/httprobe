@@ -5,7 +5,7 @@ Take a list of domains and probe for working http and https servers.
 ## Install
 
 ```shell
-▶ go install github.com/tomnomnom/httprobe@latest
+▶ go install github.com/TargetPackage/httprobe@latest
 ```
 
 ## Basic Usage
