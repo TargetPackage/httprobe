@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -61,6 +60,10 @@ func main() {
 	var proxyURI string
 	flag.StringVar(&proxyURI, "x", "", "HTTP/SOCKS proxy to use")
 
+	// follow redirects
+	var followRedirects bool
+	flag.BoolVar(&followRedirects, "follow-redirect", false, "follow redirects")
+
 	flag.Parse()
 
 	// make an actual time.Duration out of the timeout
@@ -94,6 +97,10 @@ func main() {
 		Timeout:       timeout,
 	}
 
+	if followRedirects {
+		client.CheckRedirect = nil
+	}
+
 	// domain/port pairs are initially sent on the httpsURLs channel.
 	// If they are listening and the --prefer-https flag is set then
 	// no HTTP check is performed; otherwise they're put onto the httpURLs
@@ -112,8 +119,9 @@ func main() {
 
 				// always try HTTPS first
 				withProto := "https://" + url
-				if isListening(client, withProto, method, userAgent) {
-					output <- withProto
+				isOpen, lastUrl := isListening(client, withProto, method, userAgent)
+				if isOpen {
+					output <- lastUrl
 
 					// skip trying HTTP if --prefer-https is set
 					if preferHTTPS {
@@ -136,8 +144,9 @@ func main() {
 		go func() {
 			for url := range httpURLs {
 				withProto := "http://" + url
-				if isListening(client, withProto, method, userAgent) {
-					output <- withProto
+				isOpen, lastUrl := isListening(client, withProto, method, userAgent)
+				if isOpen {
+					output <- lastUrl
 					continue
 				}
 			}
@@ -236,11 +245,11 @@ func main() {
 	outputWG.Wait()
 }
 
-func isListening(client *http.Client, url, method string, userAgent string) bool {
+func isListening(client *http.Client, url, method string, userAgent string) (bool, string) {
 
 	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
-		return false
+		return false, url
 	}
 
 	req.Header.Add("User-Agent", userAgent)
@@ -249,13 +258,14 @@ func isListening(client *http.Client, url, method string, userAgent string) bool
 
 	resp, err := client.Do(req)
 	if resp != nil {
-		io.Copy(ioutil.Discard, resp.Body)
+		io.Copy(io.Discard, resp.Body)
 		resp.Body.Close()
 	}
 
 	if err != nil {
-		return false
+		return false, url
 	}
 
-	return true
+	// In case any redirection was followed, returns the last url accessed
+	return true, resp.Request.URL.String()
 }
