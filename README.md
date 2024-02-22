@@ -26,7 +26,9 @@ https://example.edu
 https://example.net
 ```
 
-## Extra Probes
+## Flags
+
+### Extra Probes
 
 By default httprobe checks for HTTP on port 80 and HTTPS on port 443. You can add additional
 probes with the `-p` flag by specifying a protocol and a comma-delimited port list pair:
@@ -48,7 +50,7 @@ You can probe a pre-defined list of ports that are commonly used for HTTP(S) by 
 ▶ cat domains.txt | httprobe -p https:large,1234 -p http:xlarge
 ```
 
-## Concurrency
+### Concurrency
 
 You can set the concurrency level with the `-c` flag:
 
@@ -56,7 +58,7 @@ You can set the concurrency level with the `-c` flag:
 ▶ cat domains.txt | httprobe -c 50
 ```
 
-## Timeout
+### Timeout
 
 You can change the timeout by using the `-t` flag and specifying a timeout in milliseconds:
 
@@ -64,7 +66,7 @@ You can change the timeout by using the `-t` flag and specifying a timeout in mi
 ▶ cat domains.txt | httprobe -t 20000
 ```
 
-## Skipping Default Probes
+### Skipping Default Probes
 
 If you don't want to probe for HTTP on port 80 or HTTPS on port 443, you can use the
 `-s` flag. You'll need to specify the probes you do want using the `-p` flag:
@@ -73,7 +75,7 @@ If you don't want to probe for HTTP on port 80 or HTTPS on port 443, you can use
 ▶ cat domains.txt | httprobe -s -p https:8443
 ```
 
-## Prefer HTTPS
+### Prefer HTTPS
 
 Sometimes you don't care about checking HTTP if HTTPS is working. You can do that with the `--prefer-https` flag:
 
@@ -81,12 +83,20 @@ Sometimes you don't care about checking HTTP if HTTPS is working. You can do tha
 ▶ cat domains.txt | httprobe --prefer-https
 ```
 
-## Follow redirects
+### Follow redirects
 
 In case you want to apply a filter based on status code, you may also want to follow redirects to determine the final status code:
 
 ```shell
 ▶ cat domains.txt | httprobe --follow-redirect
+```
+
+### Filter Cloudflare Errors
+
+If you want to ignore hits where the page contains a Cloudflare error indicator:
+
+```shell
+▶ cat domains.txt | httprobe --filter-cf-errors
 ```
 
 ## Docker
